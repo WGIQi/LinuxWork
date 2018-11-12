@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mapper.CourseMapper">
+	<!-- 解决表名与字段不匹配 -->
+	<!-- <resultMap type="com.domain.User" id="userResultMap"> <id property="id" 
+		column="user_id"/> <result property="username" column="user_name"/> <result 
+		property="age" column="user_age"/> </resultMap> -->
+
+	<!-- 查询全部课程信息 -->
+	<select id="findAllCourse" resultType="com.domain.Course">
+		select * from course where
+		flag = 0
+	</select>
+
+	<!-- 添加课程 -->
+	<insert id="insertCourse" parameterType="com.domain.Course"
+		useGeneratedKeys="true" keyProperty="courseID">
+		INSERT INTO course
+		(courseID,coursename,coursetype,coursehours,teachhours,experimenthours,credit,coursestart,flag)
+		VALUES
+		(
+		#{courseID,jdbcType=INTEGER},
+		#{coursename,jdbcType=VARCHAR},
+		#{coursetype,jdbcType=INTEGER},
+		#{coursehours,jdbcType=INTEGER},
+		#{teachhours,jdbcType=INTEGER},
+		#{experimenthours,jdbcType=INTEGER},
+		#{credit,jdbcType=INTEGER},
+		#{coursestart,jdbcType=VARCHAR},
+		0
+		)
+	</insert>
+
+	<!-- 添加选课信息 -->
+	<insert id="insertCourseInfo" parameterType="com.domain.CourseInfo"
+		useGeneratedKeys="true" keyProperty="infoID">
+		INSERT INTO courseinfo
+		(userID,courseID)
+		VALUES
+		(
+		#{userID,jdbcType=INTEGER},
+		#{courseID,jdbcType=INTEGER}
+		)
+	</insert>
+
+	<!-- 根据课程ID查询 -->
+	<select id="findCourseById" resultType="com.domain.Course"
+		parameterType="int">
+		SELECT
+		courseID,coursename,coursetype,coursehours,teachhours,experimenthours,credit,coursestart
+		from course WHERE courseID = #{id}
+	</select>
+
+	<!-- 根据课程name查询 -->
+	<select id="findCourseByName" resultType="com.domain.Course"
+		parameterType="String">
+		SELECT
+		courseID,coursename,coursetype,coursehours,teachhours,experimenthours,credit,coursestart
+		from course WHERE coursename = #{coursename}
+	</select>
+
+	<!-- 统计学生所选课程学分 -->
+	<select id="findCreditSumById" resultType="java.lang.Integer"
+		parameterType="int">
+		SELECT SUM(c.credit)
+		FROM course c,courseinfo ci
+		WHERE c.courseID = ci.courseID and ci.userID =
+		#{userID}
+		GROUP BY ci.userID
+	</select>
+
+	<!-- 登录验证 -->
+	<select id="findUser" resultType="com.domain.User"
+		parameterType="map">
+		SELECT *
+		FROM user
+		WHERE username = #{username} and password = #{password}
+	</select>
+
+	<!-- 删除课程 -->
+	<update id="deleteCourseById" parameterType="int">
+		UPDATE course
+		SET flag = 1
+		WHERE courseID = #{courseID}
+	</update>
+
+	<!-- 根据课程ID查询学分 -->
+	<select id="findCreditById" resultType="java.lang.Integer"
+		parameterType="int">
+		SELECT credit
+		FROM course
+		WHERE courseID = #{courseID}
+	</select>
+
+	<!-- 根据userID查询所选课程 -->
+	<select id="findMyCourse" resultType="com.domain.Course"
+		parameterType="int">
+		SELECT
+		c.courseID,c.coursename,c.coursetype,c.coursehours,c.teachhours,c.experimenthours,c.credit,c.coursestart
+		FROM courseinfo ci,course c
+		WHERE ci.courseID = c.courseID AND
+		ci.userID = #{userID}
+	</select>
+
+	<!-- 根据userID查询未选课程 -->
+	<select id="findNotMyCourse" resultType="com.domain.Course"
+		parameterType="int">
+		SELECT
+		c.courseID,c.coursename,c.coursetype,c.coursehours,c.teachhours,c.experimenthours,c.credit,c.coursestart
+		FROM course c
+		WHERE c.courseID NOT IN
+		(
+		SELECT ci.courseID
+		FROM courseinfo ci
+		WHERE ci.userID = #{userID}
+		)
+	</select>
+
+	<!-- 根据courseID删除已选课程 -->
+	<delete id="deleteCourseInfoById" parameterType="int">
+		DELETE
+		FROM courseinfo
+		WHERE courseID = #{courseID}
+	</delete>
+</mapper>
